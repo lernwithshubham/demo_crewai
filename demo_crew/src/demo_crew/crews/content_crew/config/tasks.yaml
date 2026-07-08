@@ -1,0 +1,6 @@
+master_task:
+  description: >
+    Conduct comprehensive research and write a final strategic brief about {topic}. 
+    Ensure the final output is highly professional and ready for executive review.
+  expected_output: >
+    A perfectly formatted markdown document containing a 2-paragraph strategic brief.
