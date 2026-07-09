@@ -1,0 +1,16 @@
+lookup_sop_task:
+  description: >
+    Analyze the user complaint: "{complaint}". 
+    Use your tools to query the SOP knowledge base and retrieve the relevant resolution steps.
+  expected_output: >
+    A concise list of the SOP steps required to resolve the issue.
+
+draft_ticket_task:
+  description: >
+    Take the SOP steps found by the SOP Specialist and the original complaint: "{complaint}".
+    Draft a formal incident ticket containing: 
+    - Issue Summary
+    - Affected System
+    - Proposed Resolution (SOP Steps)
+  expected_output: >
+    A perfectly formatted Markdown ticket ready for human review.
