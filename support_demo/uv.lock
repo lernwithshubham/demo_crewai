@@ -3482,10 +3482,14 @@ version = "0.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "crewai", extra = ["google-genai", "tools"] },
+    { name = "requests" },
 ]
 
 [package.metadata]
-requires-dist = [{ name = "crewai", extras = ["google-genai", "tools"], specifier = ">=1.15.2,<2.0.0" }]
+requires-dist = [
+    { name = "crewai", extras = ["google-genai", "tools"], specifier = ">=1.15.2,<2.0.0" },
+    { name = "requests", specifier = ">=2.34.2" },
+]
 
 [[package]]
 name = "sympy"

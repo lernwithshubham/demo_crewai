@@ -1,9 +1,12 @@
 #!/usr/bin/env python
+import os
+import requests
 from pydantic import BaseModel
 from crewai.flow.flow import Flow, start, listen, router
 from crewai.flow.human_feedback import human_feedback
-from crewai import Agent, Task, Crew, LLM  # Added imports for the dynamic agent
+from crewai import Agent, Task, Crew, LLM
 
+# Imports the Crew from your exact directory structure
 from support_demo.crews.content_crew.content_crew import SupportCrew
 
 class SupportState(BaseModel):
@@ -17,24 +20,40 @@ class SupportFlow(Flow[SupportState]):
     def draft_ticket_step(self):
         print(f"Processing complaint: {self.state.complaint}")
         
-        # 1. Execute the primary Investigation & Drafting Crew
+        # 1. Execute the primary Investigation Crew
         result = SupportCrew().crew().kickoff(inputs={'complaint': self.state.complaint})
-        
         self.state.drafted_ticket = result.raw
+        
+        # 2. Push Notification to Slack Channel 1 BEFORE pausing
+        self._send_review_notification(self.state.drafted_ticket)
+        
         return self.state.drafted_ticket
 
-    # 2. Simplified HITL Pause - strict button clicks only
+    def _send_review_notification(self, ticket_text):
+        """Sends the drafted ticket to the first Slack channel."""
+        webhook_url = os.environ.get("SLACK_CHANNEL_1_WEBHOOK")
+        amp_dashboard_url = os.environ.get("AMP_DASHBOARD_URL", "https://app.crewai.com")
+        
+        if not webhook_url:
+            print("Warning: SLACK_CHANNEL_1_WEBHOOK not set.")
+            return
+
+        slack_payload = {
+            "text": f"🚨 *New Incident Drafted*\n\n{ticket_text}\n\n👉 <{amp_dashboard_url}|*CLICK HERE TO APPROVE IN CREWAI AMP*>"
+        }
+        requests.post(webhook_url, json=slack_payload)
+
+    # 3. The Flow pauses here for human interaction in the AMP UI
     @listen(draft_ticket_step)
     @human_feedback(
         message="Please review the drafted incident ticket.",
         emit=["approved", "rejected"],
-        llm="gemini/gemini-2.5-flash"  # CRITICAL: Stops the OpenAI default fallback
+        llm="gemini/gemini-2.5-flash" 
     )
     def approval_step(self, previous_output):
-        # Renders the ticket on the screen for the human
         return self.state.drafted_ticket
 
-    # 3. The Router 
+    # 4. The Router
     @router(approval_step)
     def route_approval(self):
         last_feedback = self.human_feedback_history[-1]
@@ -43,16 +62,15 @@ class SupportFlow(Flow[SupportState]):
         else:
             return "rejected"
 
-    # 4. Success Route: Spin up the Dispatch Agent
+    # 5. Success Route -> Spin up Dispatch Agent and push to Channel 2
     @listen("approved")
     def dispatch_to_slack(self):
-        print("Ticket approved. Spinning up Dispatch Agent...")
+        print("Ticket approved in AMP. Dispatching...")
         
-        # Instantiate a dynamic agent specifically for the Slack formatting task
         dispatcher = Agent(
             role="Slack Communications Specialist",
-            goal="Format the approved IT ticket for Slack and prepare it for dispatch.",
-            backstory="You are an expert at taking raw markdown tickets and formatting them with appropriate Slack emojis, urgency tags, and clean formatting for engineering teams.",
+            goal="Format the approved IT ticket for Slack.",
+            backstory="You format markdown tickets with Slack emojis and urgency tags.",
             llm=LLM(model="gemini/gemini-2.5-flash", temperature=0.1)
         )
         
@@ -62,19 +80,27 @@ class SupportFlow(Flow[SupportState]):
             agent=dispatcher
         )
         
-        # Execute this mini-crew on the fly
-        slack_crew = Crew(agents=[dispatcher], tasks=[dispatch_task])
-        slack_formatted_message = slack_crew.kickoff().raw
+        slack_formatted_message = Crew(agents=[dispatcher], tasks=[dispatch_task]).kickoff().raw
         
-        # (In a real environment, the requests.post() to the Slack Webhook goes here)
+        # Dispatch to Level 2 Channel
+        self._send_to_channel_2(slack_formatted_message)
         
-        self.state.final_output = f"✅ SUCCESSFULLY DISPATCHED TO SLACK #level-2-escalations:\n\n{slack_formatted_message}"
+        self.state.final_output = f"✅ DISPATCHED TO SLACK:\n{slack_formatted_message}"
         return self.state.final_output
-    
-    # 5. Rejection Route
+
+    def _send_to_channel_2(self, message):
+        """Sends the final ticket to the second Slack channel."""
+        webhook_url = os.environ.get("SLACK_CHANNEL_2_WEBHOOK")
+        if not webhook_url:
+            print("Warning: SLACK_CHANNEL_2_WEBHOOK not set.")
+            return
+            
+        payload = {"text": f"✅ *APPROVED INCIDENT TICKET*\n\n{message}"}
+        requests.post(webhook_url, json=payload)
+
     @listen("rejected")
     def reject_ticket(self):
-        self.state.final_output = "❌ TICKET REJECTED BY HUMAN. Workflow terminated."
+        self.state.final_output = "❌ TICKET REJECTED IN AMP."
         return self.state.final_output
 
 def kickoff():
