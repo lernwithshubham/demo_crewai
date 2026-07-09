@@ -2,7 +2,7 @@
 from pydantic import BaseModel
 from crewai.flow.flow import Flow, start, listen, router
 from crewai.flow.human_feedback import human_feedback
-from support_demo.crews.support_crew.support_crew import SupportCrew
+from support_demo.crews.content_crew.content_crew import SupportCrew
 
 class SupportState(BaseModel):
     complaint: str = "I can't access the staging database."
