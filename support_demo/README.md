@@ -148,27 +148,27 @@ uv run <script.py>       # Run a Python script with the locked environment
 ┌──────────────────────────────────────────────────────────────┐
 │ PHASE 1: DRAFTING                                            │
 │ • SOP Specialist queries knowledge base                      │
-│ • Ticketing Specialist drafts markdown ticket               │
+│ • Ticketing Specialist drafts markdown ticket                │
 └──────────────────────────────────────────────────────────────┘
                              ↓
 ┌──────────────────────────────────────────────────────────────┐
 │ PHASE 2: NOTIFICATION                                        │
-│ • Drafted ticket posted to Level 1 Slack channel            │
-│ • Includes clickable link to CrewAI AMP dashboard           │
+│ • Drafted ticket posted to Level 1 Slack channel             │
+│ • Includes clickable link to CrewAI AMP dashboard            │
 └──────────────────────────────────────────────────────────────┘
                              ↓
 ┌──────────────────────────────────────────────────────────────┐
-│ PHASE 3: HUMAN-IN-THE-LOOP PAUSE                            │
-│ 🛑 Workflow halts. Awaits human approval in AMP UI          │
+│ PHASE 3: HUMAN-IN-THE-LOOP PAUSE                             │
+│ 🛑 Workflow halts. Awaits human approval in AMP UI           │
 └──────────────────────────────────────────────────────────────┘
                              ↓
                     [HUMAN CLICKS "APPROVE"]
                              ↓
 ┌──────────────────────────────────────────────────────────────┐
 │ PHASE 4: DYNAMIC DISPATCH                                    │
-│ • Slack Communications Specialist agent spawned on-the-fly  │
-│ • Formats ticket with emojis & urgency tags                │
-│ • Final ticket sent to Level 2 Escalation channel          │
+│ • Slack Communications Specialist agent spawned on-the-fly   │
+│ • Formats ticket with emojis & urgency tags                  │
+│ • Final ticket sent to Level 2 Escalation channel            │
 └──────────────────────────────────────────────────────────────┘
                              ↓
                     ✅ WORKFLOW COMPLETE
@@ -642,60 +642,6 @@ Escalated to Level 2 support team.
 
 **✓ Phase 8 Complete!** You've successfully executed a full enterprise agentic workflow! 🎉
 
----
-
-## Troubleshooting
-
-### Issue: `ModuleNotFoundError: No module named 'requests'`
-**Solution:**
-```bash
-uv add requests
-uv sync
-```
-
-### Issue: `ModuleNotFoundError: No module named 'langchain_google_genai'`
-**Solution:**
-```bash
-uv add langchain-google-genai
-uv sync
-```
-
-### Issue: Flow defaults to OpenAI instead of Gemini
-**Solution:** Ensure `llm="gemini/gemini-2.5-flash"` is explicitly set in:
-- `@human_feedback` decorator in `main.py`
-- `LLM()` initialization in `content_crew.py`
-
-### Issue: Slack messages not appearing
-**Checklist:**
-- ✅ Webhook URLs are valid (test them manually with `curl`)
-- ✅ Slack channels exist and bot has permission to post
-- ✅ Environment variables are correctly set in AMP
-- ✅ Check AMP logs for webhook errors
-
-### Issue: Approval buttons not rendering in AMP
-**Solution:** Ensure `emit=["approved", "rejected"]` is set in the `@human_feedback` decorator.
-
-### Issue: "AMP Flow triggered" but nothing happens
-**Possible causes:**
-- ❌ Flow not deployed or status not "Online"
-- ❌ Bearer token or API URL incorrect
-- ❌ Environment variables not set in AMP
-- ❌ Crew code has syntax errors (check AMP logs)
-
----
-
-## 📚 Key Concepts Learned
-
-| Concept | Explanation |
-|---------|-------------|
-| **CrewAI Flow** | State machine for orchestrating multi-agent workflows |
-| **Human-in-the-Loop** | Pausing workflow execution to wait for human approval |
-| **Sequential Process** | Agents execute tasks in order (one after another) |
-| **Dynamic Agent Spawning** | Creating agents on-the-fly during workflow execution |
-| **Slack Integration** | Using Incoming Webhooks for outbound notifications |
-| **CrewAI AMP** | Platform for deploying, managing, and monitoring agentic flows |
-
----
 
 ## 📖 Learning Resources
 
@@ -705,33 +651,5 @@ uv sync
 - [Google Gemini API Docs](https://ai.google.dev/)
 - [Slack Incoming Webhooks](https://api.slack.com/messaging/webhooks)
 
----
 
-## 🔐 Security Best Practices
-
-1. **Never commit credentials** — Use `.gitignore` for `.env` files
-2. **Rotate Slack webhooks** if exposed in logs or version history
-3. **Use strong AMP API keys** and rotate regularly
-4. **Limit Slack bot permissions** to only necessary channels
-5. **Sanitize user inputs** (already handled via `@before_kickoff` hook)
-6. **Audit logs** — Regularly check CrewAI AMP logs for suspicious activity
-
----
-
-## 🤝 Support & Next Steps
-
-**Stuck?** Check the Troubleshooting section above.
-
-**Want to extend?**
-- Add more specialized agents (e.g., Security Analyst, Finance Reviewer)
-- Integrate with additional Slack channels or Microsoft Teams
-- Connect to real knowledge base APIs instead of hardcoded SOP
-- Add persistence (database) for ticket history
-- Create custom approval workflows with conditional routing
-
-**Share your build!** Tag us on social media with `#CrewAI` 🚀
-
----
-
-**Happy learning! Now go build amazing enterprise AI workflows!** 🎉
 
