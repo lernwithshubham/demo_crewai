@@ -27,7 +27,8 @@ class SupportFlow(Flow[SupportState]):
     @listen(draft_ticket_step)
     @human_feedback(
         message="Please review the drafted incident ticket.",
-        emit=["approved", "rejected"] 
+        emit=["approved", "rejected"],
+        llm="gemini/gemini-2.5-flash"  # CRITICAL: Stops the OpenAI default fallback
     )
     def approval_step(self, previous_output):
         # Renders the ticket on the screen for the human
